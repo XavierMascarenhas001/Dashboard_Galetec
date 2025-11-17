@@ -245,8 +245,8 @@ gradient_bg = """
 st.markdown(gradient_bg, unsafe_allow_html=True)
 
 # --- Load logos ---
-logo_left = Image.open(r"Images\GaeltecImage.png").resize((80, 80))
-logo_right = Image.open(r"Images\SPEN.png").resize((160, 80))
+logo_left = Image.open(r"Images/GaeltecImage.png").resize((80, 80))
+logo_right = Image.open(r"Images/SPEN.png").resize((160, 80))
 
 # --- Header layout ---
 col1, col2, col3 = st.columns([1, 4, 1])
@@ -350,7 +350,7 @@ if resume_file is not None:
     formatted_variation = f"{variation_sum:,.2f}".replace(",", " ").replace(".", ",")
 
     # Money logo
-    money_logo_path = r"Images\Pound.png"
+    money_logo_path = r"Images/Pound.png"
     money_logo = Image.open(money_logo_path).resize((40, 40))
     buffered = BytesIO()
     money_logo.save(buffered, format="PNG")
