@@ -595,11 +595,11 @@ if resume_file is not None:
                     if 'datetouse' in selected_rows.columns:
                         selected_rows['datetouse'] = pd.to_datetime(selected_rows['datetouse'], errors='coerce').dt.date
 
-                    extra_cols = ['projectmanager', 'qsub', 'project', 'shire', 'segmentdesc', 'sourcefile']
+                    extra_cols = ['pole', 'projectmanager', 'qsub', 'project', 'shire', 'segmentdesc', 'sourcefile']
                     display_cols = ['mapped', 'datetouse'] + extra_cols
                     st.dataframe(selected_rows[display_cols], use_container_width=True)
 
-                    # Excel export
+                    # --- Excel export ---
                     buffer = BytesIO()
                     with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                         for bar_value in bar_data['Mapped']:
@@ -609,7 +609,15 @@ if resume_file is not None:
                                 df_bar['datetouse'] = pd.to_datetime(df_bar['datetouse'], errors='coerce').dt.date
                             cols_to_include = ['mapped', 'datetouse'] + extra_cols
                             df_bar = df_bar[cols_to_include]
-                            sheet_name = str(bar_value)[:31]
+
+                            # Sanitize sheet name
+                            sheet_name = sanitize_sheet_name(str(bar_value))
                             df_bar.to_excel(writer, sheet_name=sheet_name, index=False)
+
                     buffer.seek(0)
-                    st.download_button(f"📥 Download Excel: {cat_name} Details", buffer, file_name=f"{cat_name}_Details.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    st.download_button(
+                        f"📥 Download Excel: {cat_name} Details",
+                        buffer,
+                        file_name=f"{cat_name}_Details.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
