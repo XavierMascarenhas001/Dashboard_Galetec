@@ -7,3 +7,4 @@ pydeck
 Pillow
 streamlit-plotly-events
 pyarrow
+openpyxl
