@@ -545,80 +545,149 @@ if resume_file is not None:
         else:
             st.info("Project or Segment Code columns not found in the data.")
 
-    # -------------------------------
-    # --- Mapping Bar Charts + Drill-down + Excel Export ---
-    # -------------------------------
+# -------------------------------
+# --- Mapping Bar Charts + Drill-down + Excel Export ---
+# -------------------------------
     st.header("📊 Mapping Charts")
     convert_to_miles = st.checkbox("Convert Equipment/Conductor Length to Miles")
 
     categories = [
         ("Poles", pole_keys, "Quantity"),
-        ("Equipment / Conductor", equipment_keys, "Length (Km)"),
-        ("Transformers", transformer_keys, "Quantity")
+        ("Transformers", transformer_keys, "Quantity"),
+        ("Conductors", conductor_keys, "Length (Km)"),
+        ("Conductors_2", conductor_2_keys, "Length (Km)"),
+        ("Equipment", equipment_keys, "Quantity"),
+        ("Insulators", insulator_keys, "Quantity"),
+        ("LV Joints (Kits)", lv_joint_kit_keys, "Quantity"),
+        ("LV Joint Modules", lv_joint_module_keys, "Quantity"),
+        ("HV Joints / Terminations", hv_joint_termination_keys, "Quantity"),
+        ("Cable Accessories", cable_accessory_keys, "Quantity"),
+        ("Foundation & Steelwork", foundation_steelwork_keys, "Quantity")
     ]
 
+    def sanitize_sheet_name(name: str) -> str:
+        name = str(name)
+        name = re.sub(r'[:\\/*?\[\]\n\r]', '_', name)
+        name = re.sub(r'[^\x00-\x7F]', '_', name)  # remove Unicode like m²
+        return name[:31]
+
+
     for cat_name, keys, y_label in categories:
-        if 'item' in filtered_df.columns and 'mapped' in filtered_df.columns:
-            pattern = '|'.join([re.escape(k) for k in keys.keys()])
-            mask = filtered_df['item'].astype(str).str.contains(pattern, case=False, na=False)
-            sub_df = filtered_df[mask]
 
-            if not sub_df.empty:
-                # Aggregate
-                if 'qsub' in sub_df.columns:
-                    sub_df['qsub_clean'] = pd.to_numeric(sub_df['qsub'].astype(str).str.replace(" ", "").str.replace(",", ".", regex=False), errors='coerce')
-                    bar_data = sub_df.groupby('mapped')['qsub_clean'].sum().reset_index()
-                    bar_data.columns = ['Mapped', 'Total']
-                else:
-                    bar_data = sub_df['mapped'].value_counts().reset_index()
-                    bar_data.columns = ['Mapped', 'Total']
+        st.subheader(f"🔹 {cat_name}")
 
-                y_axis_label = y_label
-                if cat_name == "Equipment / Conductor" and convert_to_miles:
-                    bar_data['Total'] = bar_data['Total'] * 0.621371
-                    y_axis_label = "Length (Miles)"
+        # Only process if columns exist
+        if 'item' not in filtered_df.columns or 'mapped' not in filtered_df.columns:
+            st.warning("Missing required columns: item / mapped")
+            continue
 
-                # Plot
-                fig = px.bar(bar_data, x='Mapped', y='Total', color='Total', text='Total', title=f"{cat_name} Overview",
-                             color_continuous_scale=['rgba(128,0,128,1)','rgba(147,112,219,1)','rgba(186,85,211,1)','rgba(221,160,221,1)'],
-                             labels={'Mapped': 'Mapping', 'Total': y_axis_label})
+        # Build regex pattern for this category’s keys
+        pattern = '|'.join([re.escape(k) for k in keys.keys()])
 
-                fig.update_layout(plot_bgcolor='rgba(0,0,0,1)', paper_bgcolor='rgba(0,0,0,1)', font=dict(color='white'), coloraxis_showscale=False)
-                click = plotly_events(fig, click_event=True)
-                st.plotly_chart(fig, use_container_width=True)
+        mask = filtered_df['item'].astype(str).str.contains(pattern, case=False, na=False)
+        sub_df = filtered_df[mask]
 
-                # --- Drill-down + Excel Export ---
-                if click:
-                    clicked_mapping = click[0]["x"]
-                    st.subheader(f"Details for: **{clicked_mapping}**")
-                    selected_rows = sub_df[sub_df['mapped'] == clicked_mapping].copy()
-                    selected_rows = selected_rows.loc[:, ~selected_rows.columns.duplicated()]
-                    if 'datetouse' in selected_rows.columns:
-                        selected_rows['datetouse'] = pd.to_datetime(selected_rows['datetouse'], errors='coerce').dt.date
+        if sub_df.empty:
+            st.info(f"No data found for {cat_name}")
+            continue
 
-                    extra_cols = ['pole', 'projectmanager', 'qsub', 'project', 'shire', 'segmentdesc', 'sourcefile']
-                    display_cols = ['mapped', 'datetouse'] + extra_cols
-                    st.dataframe(selected_rows[display_cols], use_container_width=True)
+        # Aggregate
+        if 'qsub' in sub_df.columns:
+            sub_df['qsub_clean'] = pd.to_numeric(
+                sub_df['qsub'].astype(str).str.replace(" ", "").str.replace(",", ".", regex=False),
+                errors='coerce'
+            )
+            bar_data = sub_df.groupby('mapped')['qsub_clean'].sum().reset_index()
+            bar_data.columns = ['Mapped', 'Total']
+        else:
+            bar_data = sub_df['mapped'].value_counts().reset_index()
+            bar_data.columns = ['Mapped', 'Total']
 
-                    # --- Excel export ---
-                    buffer = BytesIO()
-                    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                        for bar_value in bar_data['Mapped']:
-                            df_bar = sub_df[sub_df['mapped'] == bar_value].copy()
-                            df_bar = df_bar.loc[:, ~df_bar.columns.duplicated()]
-                            if 'datetouse' in df_bar.columns:
-                                df_bar['datetouse'] = pd.to_datetime(df_bar['datetouse'], errors='coerce').dt.date
-                            cols_to_include = ['mapped', 'datetouse'] + extra_cols
-                            df_bar = df_bar[cols_to_include]
+        # Divide Conductors_2 by 1000
+        if cat_name == "Conductors_2":
+            bar_data['Total'] = bar_data['Total'] / 1000
 
-                            # Sanitize sheet name
-                            sheet_name = sanitize_sheet_name(str(bar_value))
-                            df_bar.to_excel(writer, sheet_name=sheet_name, index=False)
+        # Convert conductor units if needed
+        y_axis_label = y_label
+        if cat_name in ["Conductors", "Conductors_2"] and convert_to_miles:
+            bar_data['Total'] = bar_data['Total'] * 0.621371
+            y_axis_label = "Length (Miles)"
 
-                    buffer.seek(0)
-                    st.download_button(
-                        f"📥 Download Excel: {cat_name} Details",
-                        buffer,
-                        file_name=f"{cat_name}_Details.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
+        # Compute grand total for the category
+        grand_total = bar_data['Total'].sum()
+
+        # Update Streamlit subheader with total
+        st.subheader(f"🔹 {cat_name} — Total: {grand_total:,.2f}")
+
+
+        # Draw the bar chart
+        fig = px.bar(
+            bar_data,
+            x='Mapped',
+            y='Total',
+            color='Total',
+            text='Total',
+            title=f"{cat_name} Overview",
+            color_continuous_scale=['rgba(128,0,128,1)','rgba(147,112,219,1)',
+                                    'rgba(186,85,211,1)','rgba(221,160,221,1)'],
+            labels={'Mapped': 'Mapping', 'Total': y_axis_label}
+        )
+    
+        fig.update_layout(
+            plot_bgcolor='rgba(0,0,0,1)',
+            paper_bgcolor='rgba(0,0,0,1)',
+            font=dict(color='white'),
+            coloraxis_showscale=False
+        )
+    
+        click = plotly_events(fig, click_event=True)
+        st.plotly_chart(fig, use_container_width=True)
+    
+        # Drill-down when clicking
+        if click:
+            clicked_mapping = click[0]["x"]
+    
+            st.subheader(f"Details for: **{clicked_mapping}**")
+            selected_rows = sub_df[sub_df['mapped'] == clicked_mapping].copy()
+            selected_rows = selected_rows.loc[:, ~selected_rows.columns.duplicated()]
+    
+            if 'datetouse' in selected_rows.columns:
+                selected_rows['datetouse'] = pd.to_datetime(
+                    selected_rows['datetouse'], errors='coerce'
+                ).dt.date
+            
+            extra_cols = ['pole','poling team','team_name', 'projectmanager', 'project', 'shire', 'segmentdesc', 'sourcefile']
+            selected_rows = selected_rows.rename(columns={"poling team": "code"})
+            selected_rows = selected_rows.rename(columns={"team_name": "team lider"})
+            extra_cols = [c if c != "poling team" else "code" for c in extra_cols]
+            extra_cols = [c if c != "team_name" else "team lider" for c in extra_cols]
+            display_cols = ['mapped', 'datetouse'] + extra_cols
+            display_cols = [c for c in display_cols if c in selected_rows.columns]
+    
+            st.dataframe(selected_rows[display_cols], use_container_width=True)
+    
+            # Excel Export
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                for bar_value in bar_data['Mapped']:
+                    df_bar = sub_df[sub_df['mapped'] == bar_value].copy()
+                    df_bar = df_bar.loc[:, ~df_bar.columns.duplicated()]
+                    if 'datetouse' in df_bar.columns:
+                        df_bar['datetouse'] = pd.to_datetime(
+                            df_bar['datetouse'], errors='coerce'
+                        ).dt.date
+    
+                    cols_to_include = ['mapped', 'datetouse'] + extra_cols
+                    cols_to_include = [c for c in cols_to_include if c in df_bar.columns]
+                    df_bar = df_bar[cols_to_include]
+    
+                    sheet_name = sanitize_sheet_name(bar_value)
+                    df_bar.to_excel(writer, sheet_name=sheet_name, index=False)
+    
+            buffer.seek(0)
+            st.download_button(
+                f"📥 Download Excel: {cat_name} Details",
+                buffer,
+                file_name=f"{cat_name}_Details.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
