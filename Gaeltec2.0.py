@@ -89,7 +89,7 @@ mapping_region = {
 
 # --- File Project Mapping ---
 file_project_mapping = {
-    "PCB 2022": ["Ayrshire", "PCB"],
+    "pcb 2022": ["Ayrshire", "PCB"],
     "33kv refurb": ["Ayrshire", "33kv Refurb"],
     "connections": ["Ayrshire", "Connections"],
     "storms": ["Ayrshire", "Storms"],
