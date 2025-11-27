@@ -640,7 +640,7 @@ if resume_file is not None:
     # -------------------------------
     # --- Date Filter ---
     # -------------------------------
-    filter_type = st.sidebar.selectbox("Filter by Date", ["Single Day", "Week", "Month", "Year", "Custom Range"])
+    filter_type = st.sidebar.selectbox("Filter by Date", ["Single Day", "Week", "Month", "Year", "Custom Range", "Unplanned"])
     date_range_str = ""
     if 'datetouse' in filtered_df.columns:
         if filter_type == "Single Day":
