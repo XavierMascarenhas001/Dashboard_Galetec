@@ -592,9 +592,18 @@ if aggregated_file is not None:
     df.columns = df.columns.str.strip().str.lower()  # normalize columns
 
     if 'datetouse' in df.columns:
-        df['datetouse'] = pd.to_datetime(df['datetouse'], errors='coerce')
-        df = df.dropna(subset=['datetouse'])
-        df['datetouse'] = df['datetouse'].dt.normalize()
+        # Convert to datetime where possible
+        df['datetouse_dt'] = pd.to_datetime(df['datetouse'], errors='coerce')
+        # Create display column
+        df['datetouse_display'] = df['datetouse_dt'].dt.strftime("%d/%m/%Y")
+        # Mark empty dates as "Unplanned"
+        df.loc[df['datetouse_dt'].isna(), 'datetouse_display'] = "Unplanned"
+        # OPTIONAL: normalize datetime column for sorting, keeping NaT intact
+        df['datetouse_dt'] = df['datetouse_dt'].dt.normalize()
+    else:
+        # Handle case where column is missing
+        df['datetouse_dt'] = pd.NaT
+        df['datetouse_display'] = "Unplanned"
 
 # --- Upload Resume Parquet file (for %Complete pie chart) ---
 resume_file = st.file_uploader("Upload resume Parquet file", type=["parquet"])
@@ -659,6 +668,9 @@ if resume_file is not None:
             filtered_df = filtered_df[(filtered_df['datetouse'] >= pd.Timestamp(start_date)) &
                                       (filtered_df['datetouse'] <= pd.Timestamp(end_date))]
             date_range_str = f"{start_date} to {end_date}"
+        elif filter_type == "Unplanned":
+            filtered_df = filtered_df[filtered_df['datetouse'].isna()]
+            date_range_str = "Unplanned"
 
     # -------------------------------
     # --- Total & Variation Display ---
@@ -977,17 +989,22 @@ if resume_file is not None:
             selected_rows = sub_df[sub_df['mapped'] == clicked_mapping].copy()
             selected_rows = selected_rows.loc[:, ~selected_rows.columns.duplicated()]
     
+
             if 'datetouse' in selected_rows.columns:
-                selected_rows['datetouse'] = pd.to_datetime(
+                # Create display column
+                selected_rows['datetouse_display'] = pd.to_datetime(
                     selected_rows['datetouse'], errors='coerce'
-                ).dt.date
+                ).dt.strftime("%d/%m/%Y")
+                # Mark empty dates as "Unplanned"
+                selected_rows.loc[selected_rows['datetouse'].isna(), 'datetouse_display'] = "Unplanned"
+
             
             extra_cols = ['pole','poling team','team_name', 'projectmanager', 'project', 'shire', 'segmentdesc', 'sourcefile']
             selected_rows = selected_rows.rename(columns={"poling team": "code"})
             selected_rows = selected_rows.rename(columns={"team_name": "team lider"})
             extra_cols = [c if c != "poling team" else "code" for c in extra_cols]
             extra_cols = [c if c != "team_name" else "team lider" for c in extra_cols]
-            display_cols = ['mapped', 'datetouse'] + extra_cols
+            display_cols = ['mapped', 'datetouse_display'] + extra_cols
             display_cols = [c for c in display_cols if c in selected_rows.columns]
     
             st.dataframe(selected_rows[display_cols], use_container_width=True)
@@ -999,11 +1016,12 @@ if resume_file is not None:
                     df_bar = sub_df[sub_df['mapped'] == bar_value].copy()
                     df_bar = df_bar.loc[:, ~df_bar.columns.duplicated()]
                     if 'datetouse' in df_bar.columns:
-                        df_bar['datetouse'] = pd.to_datetime(
+                        df_bar['datetouse_display'] = pd.to_datetime(
                             df_bar['datetouse'], errors='coerce'
-                        ).dt.date
-    
-                    cols_to_include = ['mapped', 'datetouse'] + extra_cols
+                        ).dt.strftime("%d/%m/%Y")
+                        df_bar.loc[df_bar['datetouse'].isna(), 'datetouse_display'] = "Unplanned"
+
+                    cols_to_include = ['mapped', 'datetouse_display'] + extra_cols
                     cols_to_include = [c for c in cols_to_include if c in df_bar.columns]
                     df_bar = df_bar[cols_to_include]
     
