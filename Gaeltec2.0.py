@@ -1233,7 +1233,7 @@ if filtered_df is not None and not filtered_df.empty:
 
         img2_s.width = IMG_WIDTH_LARGE
         img2_s.height = IMG_HEIGHT
-        img2_s.anchor = "E1"
+        img2_s.anchor = "B1"
 
         ws_summary.add_image(img1_s)
         ws_summary.add_image(img2_s)
