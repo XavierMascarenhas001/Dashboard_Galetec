@@ -1166,7 +1166,7 @@ if filtered_df is not None and not filtered_df.empty:
         export_df = export_df[cols_to_include]
 
         # ---- Output sheet (start below images) ----
-        export_df.to_excel(writer, sheet_name="Output", index=False, startrow=4)
+        export_df.to_excel(writer, sheet_name="Output", index=False, startrow=1)
         ws = writer.book["Output"]
 
         # ---- Summary sheet ----
@@ -1186,35 +1186,79 @@ if filtered_df is not None and not filtered_df.empty:
             })
         )
 
-        summary_df.to_excel(writer, sheet_name="Summary", index=False, startrow=4)
+        summary_df.to_excel(writer, sheet_name="Summary", index=False, startrow=1)
         ws_summary = writer.book["Summary"]
 
-        # ---- Resize rows for image area ----
+        # AFTER ✅
         for sheet in [ws, ws_summary]:
-            sheet.row_dimensions[1].height = 80
-            sheet.row_dimensions[2].height = 80
-            sheet.row_dimensions[3].height = 80
-            sheet.row_dimensions[4].height = 25
+            sheet.row_dimensions[1].height = 90   # logo row
 
-        # ---- Load & resize images (same size) ----
-        IMG_WIDTH = 180
-        IMG_HEIGHT = 180
+        # ---- Load & resize images ----
+        IMG_HEIGHT = 120
+        IMG_WIDTH_SMALL = 120
+        IMG_WIDTH_LARGE = IMG_WIDTH_SMALL * 3  # 🔹 3× wider
 
         img1 = XLImage("Images/GaeltecImage.png")
         img2 = XLImage("Images/SPEN.png")
 
-        for img in (img1, img2):
-            img.width = IMG_WIDTH
-            img.height = IMG_HEIGHT
+        img1.width = IMG_WIDTH_SMALL
+        img1.height = IMG_HEIGHT
 
+        img2.width = IMG_WIDTH_LARGE
+        img2.height = IMG_HEIGHT
+
+        # Position images (row 1)
         img1.anchor = "A1"
-        img2.anchor = "D1"
+        img2.anchor = "E1"
 
         ws.add_image(img1)
         ws.add_image(img2)
 
-        ws_summary.add_image(XLImage("Images/GaeltecImage.png"))
-        ws_summary.add_image(XLImage("Images/SPEN.png"))
+        # Same for Summary
+        img1_s = XLImage("Images/GaeltecImage.png")
+        img2_s = XLImage("Images/SPEN.png")
+
+        img1_s.width = IMG_WIDTH_SMALL
+        img1_s.height = IMG_HEIGHT
+        img1_s.anchor = "A1"
+
+        img2_s.width = IMG_WIDTH_LARGE
+        img2_s.height = IMG_HEIGHT
+        img2_s.anchor = "E1"
+
+        ws_summary.add_image(img1_s)
+        ws_summary.add_image(img2_s)
+
+
+        # ---- Formatting (unchanged style) ----
+        for sheet in [ws, ws_summary]:
+            max_col = sheet.max_column
+            max_row = sheet.max_row
+
+            # HEADER → ROW 2 ✅
+            for col_idx, cell in enumerate(sheet[2], start=1):
+                cell.font = header_font
+                cell.fill = header_fill
+                sheet.column_dimensions[get_column_letter(col_idx)].width = 60 if col_idx == 1 else 20
+                cell.border = Border(
+                    left=thick_side if col_idx == 1 else medium_side,
+                    right=thick_side if col_idx == max_col else medium_side,
+                    top=thick_side,
+                    bottom=thick_side
+                )
+
+            # DATA ROWS → START ROW 3 ✅
+            for row_idx in range(3, max_row + 1):
+                fill = light_grey_fill if row_idx % 2 == 1 else white_fill
+                for col_idx in range(1, max_col + 1):
+                    cell = sheet.cell(row=row_idx, column=col_idx)
+                    cell.fill = fill
+                    cell.border = Border(
+                        left=thin_side,
+                        right=thin_side,
+                        top=thin_side,
+                        bottom=thin_side
+                    )
 
     # ---- Download button ----
     buffer_agg.seek(0)
