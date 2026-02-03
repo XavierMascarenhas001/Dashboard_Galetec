@@ -1136,132 +1136,85 @@ if misc_file is not None:
                 st.info("Project or Segment Code columns not found in the data.")
 
 
+from io import BytesIO
 from openpyxl.drawing.image import Image as XLImage
 
 if filtered_df is not None and not filtered_df.empty:
     buffer_agg = BytesIO()
 
-    with pd.ExcelWriter(buffer_agg, engine='openpyxl') as writer:
+    with pd.ExcelWriter(buffer_agg, engine="openpyxl") as writer:
+
         # ---- Prepare export_df ----
         export_df = filtered_df.copy()
         export_df = export_df.rename(columns=column_rename_map)
 
-        # Format dates
-        if 'datetouse' in export_df.columns:
-            export_df['datetouse_display'] = pd.to_datetime(
-                export_df['datetouse'], errors='coerce'
+        if "datetouse" in export_df.columns:
+            export_df["datetouse_display"] = pd.to_datetime(
+                export_df["datetouse"], errors="coerce"
             ).dt.strftime("%d/%m/%Y")
-            export_df.loc[export_df['datetouse'].isna(), 'datetouse_display'] = "Unplanned"
+            export_df.loc[
+                export_df["datetouse"].isna(), "datetouse_display"
+            ] = "Unplanned"
 
-        # Select only columns that exist
         cols_to_include = [
-            'item', 'Quantity_original','Quantity_used', 'material_code', 'type', 'pole', 'Date',
-            'District', 'project', 'Project Manager', 'Circuit', 'Segment',
-            'team lider', 'PID', 'sourcefile'
+            "item", "Quantity_original", "Quantity_used", "material_code",
+            "type", "pole", "Date", "District", "project",
+            "Project Manager", "Circuit", "Segment",
+            "team lider", "PID", "sourcefile"
         ]
         cols_to_include = [c for c in cols_to_include if c in export_df.columns]
         export_df = export_df[cols_to_include]
 
-        # ---- Write Output sheet ----
-        export_df.to_excel(writer, sheet_name='Output', index=False, startrow=3)  # start at row 4
-        # ---- Make space for images ----
-        ws.insert_rows(1, amount=4)
+        # ---- Output sheet (start below images) ----
+        export_df.to_excel(writer, sheet_name="Output", index=False, startrow=4)
+        ws = writer.book["Output"]
 
-        # Adjust row heights for image area
-        ws.row_dimensions[1].height = 80
-        ws.row_dimensions[2].height = 80
-        ws.row_dimensions[3].height = 80
-        ws.row_dimensions[4].height = 20
-        ws = writer.book['Output']
-
-        # ---- Write Summary sheet ----
+        # ---- Summary sheet ----
         summary_df = (
-            export_df[export_df['item'].isin(summary_items)]
-            .groupby('item', as_index=False)['Quantity_used']
+            export_df[export_df["item"].isin(summary_items)]
+            .groupby("item", as_index=False)["Quantity_used"]
             .sum()
         )
+
         summary_df = (
-            pd.DataFrame({'item': summary_items})
-            .merge(summary_df, on='item', how='left')
+            pd.DataFrame({"item": summary_items})
+            .merge(summary_df, on="item", how="left")
             .fillna(0)
+            .rename(columns={
+                "item": "Description",
+                "Quantity_used": "Total Quantity"
+            })
         )
-        summary_df = summary_df.rename(columns={
-            'item': 'Description',
-            'Quantity_used': 'Total Quantity'
-        })
-        summary_df.to_excel(writer, sheet_name='Summary', index=False, startrow=3)  # start at row 4
-        ws_summary = writer.book['Summary']
 
-        # Load images
-        img1 = XLImage("Images/GaeltecImage.png")
-        img2 = XLImage("Images/SPEN.png")
+        summary_df.to_excel(writer, sheet_name="Summary", index=False, startrow=4)
+        ws_summary = writer.book["Summary"]
 
-        # Force SAME size for both (pixels)
+        # ---- Resize rows for image area ----
+        for sheet in [ws, ws_summary]:
+            sheet.row_dimensions[1].height = 80
+            sheet.row_dimensions[2].height = 80
+            sheet.row_dimensions[3].height = 80
+            sheet.row_dimensions[4].height = 25
+
+        # ---- Load & resize images (same size) ----
         IMG_WIDTH = 180
         IMG_HEIGHT = 180
 
-        img1.width = IMG_WIDTH
-        img1.height = IMG_HEIGHT
-        img2.width = IMG_WIDTH
-        img2.height = IMG_HEIGHT
+        img1 = XLImage("Images/GaeltecImage.png")
+        img2 = XLImage("Images/SPEN.png")
 
-        # Position images
+        for img in (img1, img2):
+            img.width = IMG_WIDTH
+            img.height = IMG_HEIGHT
+
         img1.anchor = "A1"
         img2.anchor = "D1"
 
-        # Add to worksheet
         ws.add_image(img1)
         ws.add_image(img2)
 
-        # ---- Insert images ----
-        for sheet in [ws, ws_summary]:
-            # Image 1
-            img1 = XLImage("Images/GaeltecImage.png")
-            img1.anchor = 'A1'  # top-left corner
-            sheet.add_image(img1)
-
-            # Image 2
-            img2 = XLImage("Images/SPEN.png")
-            img2.anchor = 'F1'  # adjust column as needed
-            sheet.add_image(img2)
-
-        # ---- Formatting for both sheets ----
-        header_font = Font(bold=True, size=16)
-        header_fill = PatternFill(start_color="00CCFF", end_color="00CCFF", fill_type="solid")
-        thin_side = Side(style="thin")
-        medium_side = Side(style="medium")
-        thick_side = Side(style="thick")
-        light_grey_fill = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")
-        white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
-
-        for sheet in [ws, ws_summary]:
-            max_col = sheet.max_column
-            max_row = sheet.max_row
-
-            # Header row is now row 4 (because images are above)
-            for col_idx, cell in enumerate(sheet[4], start=1):
-                cell.font = header_font
-                cell.fill = header_fill
-                sheet.column_dimensions[get_column_letter(col_idx)].width = 60 if col_idx == 1 else 20
-                cell.border = Border(
-                    left=thick_side if col_idx == 1 else medium_side,
-                    right=thick_side if col_idx == max_col else medium_side,
-                    top=thick_side,
-                    bottom=thick_side
-                )
-
-            # Alternating rows start from row 5
-            for row_idx in range(5, max_row + 1):
-                fill = light_grey_fill if row_idx % 2 == 1 else white_fill  # adjust if needed
-                for col_idx in range(1, max_col + 1):
-                    cell = sheet.cell(row=row_idx, column=col_idx)
-                    cell.fill = fill
-                    cell.border = Border(
-                        left=thin_side,
-                        right=thin_side,
-                        top=thin_side,
-                        bottom=thin_side
-                    )
+        ws_summary.add_image(XLImage("Images/GaeltecImage.png"))
+        ws_summary.add_image(XLImage("Images/SPEN.png"))
 
     # ---- Download button ----
     buffer_agg.seek(0)
