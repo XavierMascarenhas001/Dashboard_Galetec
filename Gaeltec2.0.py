@@ -1189,6 +1189,15 @@ if filtered_df is not None and not filtered_df.empty:
         summary_df.to_excel(writer, sheet_name="Summary", index=False, startrow=1)
         ws_summary = writer.book["Summary"]
 
+        # ---- Formatting styles ----
+        header_font = Font(bold=True, size=16)
+        header_fill = PatternFill(start_color="00CCFF", end_color="00CCFF", fill_type="solid")
+        thin_side = Side(style="thin")
+        medium_side = Side(style="medium")
+        thick_side = Side(style="thick")
+        light_grey_fill = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")
+        white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+
         # AFTER ✅
         for sheet in [ws, ws_summary]:
             sheet.row_dimensions[1].height = 90   # logo row
