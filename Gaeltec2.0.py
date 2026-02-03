@@ -1218,7 +1218,7 @@ if filtered_df is not None and not filtered_df.empty:
 
         # Position images (row 1)
         img1.anchor = "A1"
-        img2.anchor = "E1"
+        img2.anchor = "B1"
 
         ws.add_image(img1)
         ws.add_image(img2)
