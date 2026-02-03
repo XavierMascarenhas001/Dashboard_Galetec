@@ -1164,6 +1164,14 @@ if filtered_df is not None and not filtered_df.empty:
 
         # ---- Write Output sheet ----
         export_df.to_excel(writer, sheet_name='Output', index=False, startrow=3)  # start at row 4
+        # ---- Make space for images ----
+        ws.insert_rows(1, amount=4)
+
+        # Adjust row heights for image area
+        ws.row_dimensions[1].height = 80
+        ws.row_dimensions[2].height = 80
+        ws.row_dimensions[3].height = 80
+        ws.row_dimensions[4].height = 20
         ws = writer.book['Output']
 
         # ---- Write Summary sheet ----
@@ -1183,6 +1191,27 @@ if filtered_df is not None and not filtered_df.empty:
         })
         summary_df.to_excel(writer, sheet_name='Summary', index=False, startrow=3)  # start at row 4
         ws_summary = writer.book['Summary']
+
+        # Load images
+        img1 = XLImage("Images/GaeltecImage.png")
+        img2 = XLImage("Images/SPEN.png")
+
+        # Force SAME size for both (pixels)
+        IMG_WIDTH = 180
+        IMG_HEIGHT = 180
+
+        img1.width = IMG_WIDTH
+        img1.height = IMG_HEIGHT
+        img2.width = IMG_WIDTH
+        img2.height = IMG_HEIGHT
+
+        # Position images
+        img1.anchor = "A1"
+        img2.anchor = "D1"
+
+        # Add to worksheet
+        ws.add_image(img1)
+        ws.add_image(img2)
 
         # ---- Insert images ----
         for sheet in [ws, ws_summary]:
