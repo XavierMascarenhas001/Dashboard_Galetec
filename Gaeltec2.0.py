@@ -1765,11 +1765,14 @@ if misc_df is not None:
     # -----------------------------
     # Data preparation
     # -----------------------------
+    misc_df.columns = misc_df.columns.str.strip()
+    misc_df.columns = misc_df.columns.str.lower()
+    misc_df.columns = misc_df.columns.str.replace(' ', '_')
     filtered_df['item'] = filtered_df['item'].astype(str)
-    misc_df['Description'] = misc_df['Description'].astype(str)
+    misc_df['description'] = misc_df['description'].astype(str)
 
     # Map items to work instructions
-    item_to_column_i = misc_df.set_index('Description')['MD Poling'].to_dict()
+    item_to_column_i = misc_df.set_index('description')['md_poling'].to_dict()
     poles_df = filtered_df[filtered_df['pole'].notna() & (filtered_df['pole'].astype(str).str.lower() != "nan")].copy()
     poles_df['Work instructions'] = poles_df['item'].map(item_to_column_i)
 
