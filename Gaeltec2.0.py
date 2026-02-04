@@ -1750,6 +1750,7 @@ if filtered_df is not None and not filtered_df.empty:
         if "Quantity_used" in export_df.columns:
             # Ensure numeric type
             # Apply normalization
+            export_df["Quantity_used"] = pd.to_numeric(export_df["Quantity_used"], errors="coerce").fillna(0)
             export_df["item_norm"] = export_df["item"].apply(normalize_item)
             summary_items_norm = [normalize_item(i) for i in summary_items]
             special_item_norm = normalize_item(special_item)
