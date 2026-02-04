@@ -1624,7 +1624,7 @@ if misc_df is not None:
     misc_df['column_1'] = misc_df['column_1'].astype(str)
 
     # Map items to work instructions
-    item_to_column_i = misc_df.set_index('column_1')['column_3'].to_dict()
+    item_to_column_i = misc_df.set_index('column_1')['column_2'].to_dict()
     poles_df = filtered_df[filtered_df['pole'].notna() & (filtered_df['pole'].astype(str).str.lower() != "nan")].copy()
     poles_df['Work instructions'] = poles_df['item'].map(item_to_column_i)
 
