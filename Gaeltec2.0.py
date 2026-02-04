@@ -752,7 +752,10 @@ summary_items = [
     "Install bare conductor, run out, sag, terminate, bind in and connect jumpers; >=100mm² <200mm².",
     "Install conductor, run out, sag, terminate, clamp in and connect jumpers; 2c + Earth.",
     "Install conductor, run out, sag, terminate, clamp in and connect jumpers; 4c + Earth.",
-    "Install service span including connection to mainline & building / structure."
+    "Install service span including connection to mainline & building / structure.",
+    "Remove 1.ph or 3.ph HV fuses.",
+    "Erect 3.ph fuse units at single tee off pole or in line pole."
+    
 ]
 
 categories = [
@@ -1734,24 +1737,31 @@ if filtered_df is not None and not filtered_df.empty:
         ws = writer.book["Output"]
 
         # ---- Summary sheet ----
-        summary_df = (
-            export_df[export_df["item"].isin(summary_items)]
-            .groupby("item", as_index=False)["Quantity_used"]
-            .sum()
-        )
+        if "Quantity_used" in export_df.columns:
+            # Ensure numeric type
+            export_df["Quantity_used"] = pd.to_numeric(export_df["Quantity_used"], errors="coerce").fillna(0)
 
-        summary_df = (
-            pd.DataFrame({"item": summary_items})
-            .merge(summary_df, on="item", how="left")
-            .fillna(0)
-            .rename(columns={
-                "item": "Description",
-                "Quantity_used": "Total Quantity"
-            })
-        )
+            # Aggregate sum by item
+            summary_df = (
+                export_df[export_df["item"].isin(summary_items)]
+                .groupby("item", as_index=False)["Quantity_used"]
+                .sum()
+            )
 
-        summary_df.to_excel(writer, sheet_name="Summary", index=False, startrow=1)
-        ws_summary = writer.book["Summary"]
+            # Ensure all summary_items are present, even if missing in export_df
+            summary_df = (
+                pd.DataFrame({"item": summary_items})
+                .merge(summary_df, on="item", how="left")
+                .fillna(0)
+                .rename(columns={
+                    "item": "Description",
+                    "Quantity_used": "Total Quantity"
+                })
+            )
+
+            # Write to Excel
+            summary_df.to_excel(writer, sheet_name="Summary", index=False, startrow=1)
+            ws_summary = writer.book["Summary"]
 
         # ---- Formatting styles ----
         header_font = Font(bold=True, size=16)
