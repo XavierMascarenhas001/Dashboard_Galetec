@@ -736,25 +736,25 @@ foundation_steelwork_keys = {
 
 summary_items = [
     "Erect Single HV/EHV Pole, up to and including 12 metre pole.",
-    "Erect Section Structure 'H' HV/EHV Pole, up to and including 12 metre pole.",
-    "Erect LV Structure Single Pole, up to and including 12 metre pole.",
-    "Recover single pole, up to and including 15 metres in height, and reinstate, all ground conditions.",
-    "Recover 'A' / 'H' pole, up to and including 15 metres in height, and reinstate, all ground conditions.",
+    "Erect Section Structure 'H' HV/EHV Pole, up to and including 12 metre pole",
+    "Erect LV Structure Single Pole, up to and including 12 metre pole",
+    "Recover single pole, up to and including 15 metres in height, and reinstate, all ground conditions",
+    "Recover 'A' / 'H' pole, up to and including 15 metres in height, and reinstate, all ground conditions",
     "Erect 11kV/33kV ABSW.",
-    "Erect 11kV Remote Controlled Switch Disconnector (Soule Auguste) or Auto Reclosure unit c/w VT, Aerial, RTU & umbilical cable.",
-    "Erect pole mounted transformer up to 100kVA 1.ph.",
-    "Erect pole mounted transformer up to 200kVA 3.p.h.",
-    "Remove pole mounted transformer.",
-    "Remove platform mounted or 'H' pole mounted transformer.",
-    "Remove 11kV/33kV ABSW.",
-    "Remove Auto Reclosure.",
-    "Install bare conductor, run out, sag, terminate, bind in and connect jumpers; <100mm².",
-    "Install bare conductor, run out, sag, terminate, bind in and connect jumpers; >=100mm² <200mm².",
-    "Install conductor, run out, sag, terminate, clamp in and connect jumpers; 2c + Earth.",
-    "Install conductor, run out, sag, terminate, clamp in and connect jumpers; 4c + Earth.",
-    "Install service span including connection to mainline & building / structure.",
-    "Remove 1.ph or 3.ph HV fuses.",
-    "Erect 3.ph fuse units at single tee off pole or in line pole."
+    "Erect 11kV Remote Controlled Switch Disconnector ( Soule Auguste ) or Auto Reclosure unit c/w VT, Aerial, RTU & umbilical cable",
+    "Erect pole mounted transformer up to 100kVA 1.ph",
+    "Erect pole mounted transformer up to 200kVA 3.p.h",
+    "Remove pole mounted transformer",
+    "Remove platform mounted or 'H' pole mounted transformer",
+    "Remove 11kV/33kV ABSW",
+    "Remove Auto Reclosure",
+    "Install bare conductor, run out, sag, terminate, bind in and connect jumpers; <100mm²",
+    "Install bare conductor, run out, sag, terminate, bind in and connect jumpers; >=100mm² <200mm²",
+    "Install conductor, run out, sag, terminate, clamp in and connect jumpers; 2c + Earth",
+    "Install conductor, run out, sag, terminate, clamp in and connect jumpers; 4c + Earth",
+    "Install service span including connection to mainline & building / structure",
+    "Remove 1.ph or 3.ph HV fuses",
+    "Erect 3.ph fuse units at single tee off pole or in line pole"
     
 ]
 
