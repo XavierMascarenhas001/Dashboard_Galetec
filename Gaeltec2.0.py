@@ -1752,8 +1752,9 @@ if filtered_df is not None and not filtered_df.empty:
             special_item = (
                 "Erect 11kV Remote Controlled Switch Disconnector (Soule Auguste) or Auto Reclosure unit c/w VT, Aerial, RTU & umbilical cable."
             )
+            pattern = re.escape(special_item.strip())
             # Extract all rows for the special item
-            special_df = export_df[export_df["item"] == special_item].copy()
+            special_df = export_df[export_df["item"].str.strip().str.contains(pattern, case=False, na=False)].copy()
 
             if not special_df.empty:
                 # Group by unique comment and sum quantities
