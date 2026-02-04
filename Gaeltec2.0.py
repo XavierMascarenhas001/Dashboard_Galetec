@@ -188,6 +188,16 @@ def build_export_df(filtered_df):
     export_df = export_df[existing_cols]
 
     return export_df
+
+# Normalize strings: remove leading/trailing spaces, lowercase, remove extra dots
+def normalize_item(s):
+    if pd.isna(s):
+        return ""
+    s = str(s).strip().lower()           # strip spaces and lowercase
+    s = s.replace(".", "")               # remove dots
+    s = re.sub(r"\s+", " ", s)          # collapse multiple spaces
+    return s
+
     
 # --- MAPPINGS ---
 
@@ -1739,8 +1749,10 @@ if filtered_df is not None and not filtered_df.empty:
         # ---- Summary sheet ----
         if "Quantity_used" in export_df.columns:
             # Ensure numeric type
-            export_df["Quantity_used"] = pd.to_numeric(export_df["Quantity_used"], errors="coerce").fillna(0)
-
+            # Apply normalization
+            export_df["item_norm"] = export_df["item"].apply(normalize_item)
+            summary_items_norm = [normalize_item(i) for i in summary_items]
+            special_item_norm = normalize_item(special_item)
             # Aggregate sum by item
             summary_df = (
                 export_df[export_df["item"].isin(summary_items)]
@@ -1754,7 +1766,7 @@ if filtered_df is not None and not filtered_df.empty:
             )
             pattern = re.escape(special_item.strip())
             # Extract all rows for the special item
-            special_df = export_df[export_df["item"].str.strip().str.contains(pattern, case=False, na=False)].copy()
+            special_df = export_df[export_df["item"].str.contains(special_item_norm, na=False)].copy()
 
             if not special_df.empty:
                 # Group by unique comment and sum quantities
