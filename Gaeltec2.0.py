@@ -1754,42 +1754,30 @@ if filtered_df is not None and not filtered_df.empty:
             export_df["item_norm"] = export_df["item"].apply(normalize_item)
             summary_items_norm = [normalize_item(i) for i in summary_items]
             special_item_norm = normalize_item(special_item)
-            # Aggregate sum by item
-            summary_df = (
-                export_df[export_df["item"].isin(summary_items)]
-                .groupby("item", as_index=False)["Quantity_used"]
-                .sum()
-            )
-
                 # Add comments column for the special item
             special_item = (
                 "Erect 11kV Remote Controlled Switch Disconnector (Soule Auguste) or Auto Reclosure unit c/w VT, Aerial, RTU & umbilical cable."
             )
+            # Aggregate sum by item
+            summary_df = (
+                export_df[export_df["item_norm"].isin(summary_items_norm)]
+                .groupby("item_norm", as_index=False)["Quantity_used"]
+                .sum()
+            )
+
             pattern = re.escape(special_item.strip())
             # Extract all rows for the special item
-            special_df = export_df[export_df["item"].str.contains(special_item_norm, na=False)].copy()
+            special_df = export_df[export_df["item_norm"].str.contains(special_item_norm, na=False)].copy()
 
             if not special_df.empty:
                 # Group by unique comment and sum quantities
                 special_summary = (
                     special_df.groupby(["item", "comment"], as_index=False)["Quantity_used"]
                     .sum()
+                    .rename(columns={"item": "Description", "Quantity_used": "Total Quantity", "comment": "Comment"})
                     )
-                
-                # Rename columns to match summary style
-                special_summary = special_summary.rename(
-                    columns={"item": "Description", "Quantity_used": "Total Quantity", "comment": "Comment"}
-                )
             else:
                 special_summary = pd.DataFrame(columns=["Description", "Total Quantity", "Comment"])
-
-            # Prepare general summary (exclude special item if you want)
-            general_summary = (
-                pd.DataFrame({"item": summary_items})
-                .merge(summary_df, on="item", how="left")
-                .fillna(0)
-                .rename(columns={"item": "Description", "Quantity_used": "Total Quantity"})
-                )
 
             # Append special item summary (multiple rows per comment)
             final_summary = pd.concat([general_summary, special_summary], ignore_index=True, sort=False)
