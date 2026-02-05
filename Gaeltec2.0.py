@@ -1545,6 +1545,7 @@ if misc_file is not None:
                 aggregated_df.to_excel(writer, sheet_name='Aggregated', index=False)
                 # Access the worksheet
                 ws = writer.book['Aggregated']
+                ws.insert_rows(1)
                 # ---- Header style ----
                 # ---- Formatting styles ----
                 header_font = Font(bold=True, size=16)
