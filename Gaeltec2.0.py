@@ -23,6 +23,8 @@ from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Border, Side
 import io
+from io import BytesIO
+from openpyxl.drawing.image import Image as XLImage
 
 # --- Page config for wide layout ---
 st.set_page_config(
@@ -1738,8 +1740,7 @@ general_summary = pd.DataFrame(
     columns=["Description", "Total Quantity", "Comment"]
 )
 
-from io import BytesIO
-from openpyxl.drawing.image import Image as XLImage
+
 
 if filtered_df is not None and not filtered_df.empty:
     buffer_agg = BytesIO()
