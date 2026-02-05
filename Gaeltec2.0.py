@@ -1554,7 +1554,7 @@ if misc_file is not None:
                 white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
 
                 # AFTER ✅
-                for sheet in [ws, ws_summary]:
+                for sheet in [ws]:
                     sheet.row_dimensions[1].height = 90   # logo row
 
                 # ---- Load & resize images ----
@@ -1580,9 +1580,9 @@ if misc_file is not None:
 
 
                 # ---- Formatting (unchanged style) ----
-                for sheet in [ws, ws_summary]:
+                for sheet in [ws]:
                     max_col = sheet.max_column
-                   max_row = sheet.max_row
+                    max_row = sheet.max_row
 
                     # HEADER → ROW 2 ✅
                     for col_idx, cell in enumerate(sheet[2], start=1):
