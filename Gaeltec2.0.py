@@ -1544,49 +1544,70 @@ if misc_file is not None:
                 # Access the worksheet
                 ws = writer.book['Aggregated']
                 # ---- Header style ----
+                # ---- Formatting styles ----
                 header_font = Font(bold=True, size=16)
                 header_fill = PatternFill(start_color="00CCFF", end_color="00CCFF", fill_type="solid")
-                # ---- Border styles ----
                 thin_side = Side(style="thin")
                 medium_side = Side(style="medium")
                 thick_side = Side(style="thick")
-                for col_idx, cell in enumerate(ws[1], start=1):
-                    cell.font = header_font
-                    cell.fill = header_fill
-
-                    # Optional: auto-adjust column width
-                    column_letter = get_column_letter(col_idx)
-                    ws.column_dimensions[column_letter].width = 20
-
-                # ---- Alternating row colors ----
                 light_grey_fill = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")
                 white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
 
-                for row_idx in range(2, ws.max_row + 1):  # start after header
-                    fill = light_grey_fill if row_idx % 2 == 0 else white_fill
-                    for col_idx in range(1, ws.max_column + 1):
-                        ws.cell(row=row_idx, column=col_idx).fill = fill
+                # AFTER ✅
+                for sheet in [ws, ws_summary]:
+                    sheet.row_dimensions[1].height = 90   # logo row
 
-                max_col = ws.max_column
+                # ---- Load & resize images ----
+                IMG_HEIGHT = 120
+                IMG_WIDTH_SMALL = 120
+                IMG_WIDTH_LARGE = IMG_WIDTH_SMALL * 3  # 🔹 3× wider
 
-                for col_idx in range(1, max_col + 1):
-                    cell = ws.cell(row=1, column=col_idx)
+                img1 = XLImage("Images/GaeltecImage.png")
+                img2 = XLImage("Images/SPEN.png")
 
-                    cell.border = Border(
-                        left=thick_side if col_idx == 1 else medium_side,
-                        right=thick_side if col_idx == max_col else medium_side,
-                        top=thick_side,
-                        bottom=thick_side
-                    )
+                img1.width = IMG_WIDTH_SMALL
+                img1.height = IMG_HEIGHT
 
-                for row_idx in range(2, ws.max_row + 1):
-                    for col_idx in range(1, max_col + 1):
-                        cell = ws.cell(row=row_idx, column=col_idx)
+                img2.width = IMG_WIDTH_LARGE
+                img2.height = IMG_HEIGHT
 
+                # Position images (row 1)
+                img1.anchor = "B1"
+                img2.anchor = "A1"
+
+                ws.add_image(img1)
+                ws.add_image(img2)
+
+
+                # ---- Formatting (unchanged style) ----
+                for sheet in [ws, ws_summary]:
+                    max_col = sheet.max_column
+                   max_row = sheet.max_row
+
+                    # HEADER → ROW 2 ✅
+                    for col_idx, cell in enumerate(sheet[2], start=1):
+                        cell.font = header_font
+                        cell.fill = header_fill
+                        sheet.column_dimensions[get_column_letter(col_idx)].width = 60 if col_idx == 1 else 20
                         cell.border = Border(
-                            left=thin_side if col_idx == 1 else thin_side,
-                            right=thin_side
+                            left=thick_side if col_idx == 1 else medium_side,
+                            right=thick_side if col_idx == max_col else medium_side,
+                            top=thick_side,
+                            bottom=thick_side
                         )
+
+                    # DATA ROWS → START ROW 3 ✅
+                    for row_idx in range(3, max_row + 1):
+                        fill = light_grey_fill if row_idx % 2 == 1 else white_fill
+                        for col_idx in range(1, max_col + 1):
+                            cell = sheet.cell(row=row_idx, column=col_idx)
+                            cell.fill = fill
+                            cell.border = Border(
+                                left=thin_side,
+                                right=thin_side,
+                                top=thin_side,
+                                bottom=thin_side
+                            )
 
             buffer_agg.seek(0)
             st.download_button(
@@ -1824,8 +1845,8 @@ if filtered_df is not None and not filtered_df.empty:
         img2.height = IMG_HEIGHT
 
         # Position images (row 1)
-        img1.anchor = "A1"
-        img2.anchor = "B1"
+        img1.anchor = "B1"
+        img2.anchor = "A1"
 
         ws.add_image(img1)
         ws.add_image(img2)
