@@ -1809,6 +1809,29 @@ if filtered_df is not None and not filtered_df.empty:
                     .sum()
                     .rename(columns={"item": "Description", "Quantity_used": "Total Quantity", "comment": "Comment"})
                     )
+
+                # --- Normalise comment safely ---
+                special_df["comment_clean"] = (
+                special_df["comment"]
+                .fillna("")
+                .str.lower()
+                .str.strip()
+                )
+                # --- Classify manufacturer ---
+                def classify_switch(comment):
+                    if "soule" in comment:
+                        return "Soule"
+                    elif "noja" in comment:
+                        return "Noja"
+                    else:
+                        return "Unknown"
+
+                special_df["Manufacturer"] = special_df["comment_clean"].apply(classify_switch)
+
+                # --- Aggregate ---
+                special_summary = (special_df.groupby(["item", "Manufacturer"], as_index=False)["Quantity_used"]
+                                   .sum().rename(columns={"item": "Description","Quantity_used": "Total Quantity","Manufacturer": "Comment",}))
+
             else:
                 special_summary = pd.DataFrame(columns=["Description", "Total Quantity", "Comment"])
 
