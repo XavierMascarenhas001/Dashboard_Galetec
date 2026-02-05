@@ -1751,13 +1751,13 @@ if filtered_df is not None and not filtered_df.empty:
             # Ensure numeric type
             # Apply normalization
             export_df["Quantity_used"] = pd.to_numeric(export_df["Quantity_used"], errors="coerce").fillna(0)
+            special_item = (
+                "Erect 11kV Remote Controlled Switch Disconnector (Soule Auguste) or Auto Reclosure unit c/w VT, Aerial, RTU & umbilical cable."
+            )
             export_df["item_norm"] = export_df["item"].apply(normalize_item)
             summary_items_norm = [normalize_item(i) for i in summary_items]
             special_item_norm = normalize_item(special_item)
                 # Add comments column for the special item
-            special_item = (
-                "Erect 11kV Remote Controlled Switch Disconnector (Soule Auguste) or Auto Reclosure unit c/w VT, Aerial, RTU & umbilical cable."
-            )
             # Aggregate sum by item
             summary_df = (
                 export_df[export_df["item_norm"].isin(summary_items_norm)]
