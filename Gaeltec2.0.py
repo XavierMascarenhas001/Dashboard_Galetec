@@ -25,6 +25,7 @@ from openpyxl.styles import Border, Side
 import io
 from io import BytesIO
 from openpyxl.drawing.image import Image as XLImage
+from openpyxl.styles import numbers
 
 # --- Page config for wide layout ---
 st.set_page_config(
@@ -1753,16 +1754,13 @@ if filtered_df is not None and not filtered_df.empty:
         export_df = export_df.rename(columns=column_rename_map)
 
         if "done" in export_df.columns:
-            export_df["done"] = pd.to_datetime(
-                export_df["done"], errors="coerce"
-            ).dt.strftime("%d/%m/%Y")
-            export_df.loc[
-                export_df["done"].isna(), "done"
-            ] = "Unplanned"
+            export_df["done"] = pd.to_datetime(export_df["done"], errors="coerce")
+            export_df["done_display"] = export_df["done"].dt.strftime("%d/%m/%Y")
+            export_df.loc[export_df["done"].isna(), "done"] = "Unplanned"
 
         cols_to_include = [
             "item","comment", "Quantity_original", "Quantity_used", "material_code",
-            "type", "pole", "Date","done", "District", "project",
+            "type", "pole", "Date","done_display", "District", "project",
             "Project Manager", "Circuit", "Segment",
             "team lider", "PID", "sourcefile"
         ]
