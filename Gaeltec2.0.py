@@ -1963,6 +1963,11 @@ if agg_view is not None and 'total' in agg_view.columns:
     else:
         filtered_agg['datetouse_dt'] = pd.to_datetime(filtered_agg['datetouse_dt'], errors='coerce')
 
+    # Ignore dates later than 2023
+    filtered_agg = filtered_agg[
+        filtered_agg['datetouse_dt'] <= pd.Timestamp("2023-12-31")
+    ]
+
     # Ensure 'total' is numeric
     filtered_agg['total'] = pd.to_numeric(filtered_agg['total'], errors='coerce').fillna(0)
 
