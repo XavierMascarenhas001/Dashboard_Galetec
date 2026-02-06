@@ -1754,8 +1754,9 @@ if filtered_df is not None and not filtered_df.empty:
         export_df = export_df.rename(columns=column_rename_map)
 
         if "done" in export_df.columns:
-            export_df["done"] = pd.to_datetime(export_df["done"], errors="coerce")
-            export_df["done_display"] = export_df["done"].dt.strftime("%d/%m/%Y")
+            export_df["datetouse"] = pd.to_datetime(export_df["datetouse"], errors="coerce")
+            export_df["datetouse"] = export_df["datetouse"].dt.strftime("%d/%m/%Y")
+            export_df["done"] = pd.to_datetime(export_df["done"], errors="coerce").dt.strftime("%d/%m/%Y")
             export_df.loc[export_df["done"].isna(), "done"] = "Unplanned"
 
         cols_to_include = [
