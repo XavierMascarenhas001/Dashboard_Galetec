@@ -1752,12 +1752,12 @@ if filtered_df is not None and not filtered_df.empty:
         export_df = filtered_df.copy()
         export_df = export_df.rename(columns=column_rename_map)
 
-        if "datetouse" in export_df.columns:
+        if "done" in export_df.columns:
             export_df["datetouse_display"] = pd.to_datetime(
-                export_df["datetouse"], errors="coerce"
+                export_df["done"], errors="coerce"
             ).dt.strftime("%d/%m/%Y")
             export_df.loc[
-                export_df["datetouse"].isna(), "datetouse_display"
+                export_df["done"].isna(), "datetouse_display"
             ] = "Unplanned"
 
         cols_to_include = [
@@ -1965,7 +1965,7 @@ if agg_view is not None and 'total' in agg_view.columns:
 
     # Ignore dates later than 2023
     filtered_agg = filtered_agg[
-        filtered_agg['datetouse_dt'] <= pd.Timestamp("2023-12-31")
+        filtered_agg['datetouse_dt'].dt.year > 2023
     ]
 
     # Ensure 'total' is numeric
