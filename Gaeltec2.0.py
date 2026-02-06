@@ -1529,9 +1529,8 @@ if misc_file is not None:
                     df_bar = sub_df[sub_df['mapped'] == bar_value].copy()
                     df_bar = df_bar.loc[:, ~df_bar.columns.duplicated()]
                     if 'datetouse' in df_bar.columns:
-                        df_bar['datetouse_display'] = pd.to_datetime(
-                            df_bar['datetouse'], errors='coerce'
-                        ).dt.strftime("%d/%m/%Y")
+                        df_bar['datetouse_display'] = pd.to_datetime(df_bar['datetouse'], errors='coerce')
+                        df_bar['datetouse_display'] = df_bar['datetouse'].dt.strftime("%d/%m/%Y")
                         df_bar.loc[df_bar['datetouse'].isna(), 'datetouse_display'] = "Unplanned"
 
                     # 🔥 Rename columns BEFORE selecting
@@ -1754,9 +1753,8 @@ if filtered_df is not None and not filtered_df.empty:
         export_df = export_df.rename(columns=column_rename_map)
 
         if "done" in export_df.columns:
-            export_df["datetouse"] = pd.to_datetime(export_df["datetouse"], errors="coerce")
-            export_df["datetouse"] = export_df["datetouse"].dt.strftime("%d/%m/%Y")
-            export_df["done"] = pd.to_datetime(export_df["done"], errors="coerce").dt.strftime("%d/%m/%Y")
+            export_df["done"] = pd.to_datetime(export_df["done"], errors="coerce")
+            export_df["done_display"] = export_df["done"].dt.strftime("%d/%m/%Y")
             export_df.loc[export_df["done"].isna(), "done"] = "Unplanned"
 
         cols_to_include = [
