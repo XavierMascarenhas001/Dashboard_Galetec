@@ -1819,9 +1819,12 @@ if filtered_df is not None and not filtered_df.empty:
                 )
                 # --- Classify manufacturer ---
                 def classify_switch(comment):
-                    if "soule" in comment:
+                    if not isinstance(comment, str):
+                        return "Unknown"
+                    comment = comment.lower()
+                    if re.search(r"\bsoule\b", comment):
                         return "Soule"
-                    elif "noja" in comment:
+                    elif re.search(r"\bnoja\b", comment):
                         return "Noja"
                     else:
                         return "Unknown"
