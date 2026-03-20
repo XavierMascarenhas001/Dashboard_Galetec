@@ -1203,6 +1203,138 @@ if misc_file is not None:
     except Exception as e:
         st.warning(f"Could not generate % Complete pie chart: {e}")
         
+    # -------------------------------
+    # --- Map Section ---
+    # -------------------------------
+    col_map, col_desc = st.columns([2, 1])
+    with col_map:
+        st.header("🗺️ Regional Map View")
+        folder_path = r"Maps"
+        file_list = glob.glob(os.path.join(folder_path, "*.json"))
+
+        if not file_list:
+            st.error(f"No JSON files found in folder: {folder_path}")
+        else:
+            gdf_list = [gpd.read_file(file) for file in file_list]
+            combined_gdf = gpd.GeoDataFrame(pd.concat(gdf_list, ignore_index=True), crs=gdf_list[0].crs)
+
+            if "region" in filtered_df.columns:
+                active_regions = filtered_df["region"].dropna().unique().tolist()
+                wards_to_select = []
+                for region in active_regions:
+                    if region in mapping_region:
+                        wards_to_select.extend(mapping_region[region])
+                    else:
+                        wards_to_select.append(region)
+                wards_to_select = list(set(wards_to_select))
+                areas_of_interest = combined_gdf[combined_gdf["WD13NM"].isin(wards_to_select)]
+            else:
+                areas_of_interest = pd.DataFrame()
+
+            if not areas_of_interest.empty:
+                areas_of_interest["geometry_simplified"] = areas_of_interest.geometry.simplify(tolerance=0.01)
+                centroid = areas_of_interest.geometry_simplified.centroid.unary_union.centroid
+
+                # Red flag
+                flag_data = pd.DataFrame({"lon": [centroid.x], "lat": [centroid.y], "icon_name": ["red_flag"]})
+                icon_mapping = {
+                    "red_flag": {
+                        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Red_flag_icon.svg/128px-Red_flag_icon.png",
+                        "width": 128, "height": 128, "anchorY": 128
+                    }
+                }
+
+                polygon_layer = pdk.Layer(
+                    "GeoJsonLayer",
+                    areas_of_interest["geometry_simplified"].__geo_interface__,
+                    stroked=True,
+                    filled=True,
+                    get_fill_color=[160, 120, 80, 200],
+                    get_line_color=[0, 0, 0],
+                    pickable=True
+                )
+
+                flag_layer = pdk.Layer(
+                    "IconLayer",
+                    data=flag_data,
+                    get_icon="icon_name",
+                    get_size=4,
+                    size_scale=15,
+                    get_position='[lon, lat]',
+                    pickable=True,
+                    icon_mapping=icon_mapping
+                )
+
+                view_state = pdk.ViewState(latitude=centroid.y, longitude=centroid.x, zoom=8, pitch=0)
+
+                st.pydeck_chart(
+                    pdk.Deck(
+                        layers=[polygon_layer, flag_layer],
+                        initial_view_state=view_state,
+                        map_style="mapbox://styles/mapbox/outdoors-v11"
+                    )
+                )
+            else:
+                st.info("No matching regions found for the selected filters.")
+
+
+    with col_desc:
+        st.markdown("<h3 style='color:white;'>Weather</h3>", unsafe_allow_html=True)
+        
+        # --- Scottish Weather Widget ---
+        try:
+            # Get API key from secrets
+            api_key = st.secrets.get("d4d09fcf1373f72c30b970fb20d51fd9")
+            
+            if not api_key:
+                st.info("Weather API key not configured")
+            else:
+                # Location selector
+                location = st.selectbox(
+                    "Select Location",
+                    ["Ayrshire", "Lanarkshire", "Glasgow", "Edinburgh"],
+                    index=0,
+                    key="weather_location"
+                )
+                
+                if st.button("Refresh Weather", key="refresh_weather"):
+                    st.rerun()
+                
+                # Get current weather
+                weather_data = get_scottish_weather(api_key, location)
+                
+                if weather_data:
+                    # Display weather information
+                    temp = weather_data['main']['temp']
+                    feels_like = weather_data['main']['feels_like']
+                    humidity = weather_data['main']['humidity']
+                    wind_speed = weather_data['wind']['speed']
+                    description = weather_data['weather'][0]['description'].title()
+                    icon_code = weather_data['weather'][0]['icon']
+                    
+                    # Weather icon and description
+                    col_icon, col_desc = st.columns([1, 2])
+                    with col_icon:
+                        st.image(f"http://openweathermap.org/img/wn/{icon_code}@2x.png", width=50)
+                    with col_desc:
+                        st.write(f"**{description}**")
+                    
+                    # Weather metrics
+                    st.metric("Temperature", f"{temp}°C", f"Feels like {feels_like}°C")
+                    st.metric("Humidity", f"{humidity}%")
+                    st.metric("Wind Speed", f"{wind_speed} m/s")
+                    
+                    # Construction impact assessment
+                    st.markdown("---")
+                    st.markdown("**Construction Impact:**")
+                    impact = assess_construction_impact(weather_data)
+                    st.write(impact)
+                else:
+                    st.error("Failed to fetch weather data")
+                    
+        except Exception as e:
+            st.warning(f"Could not load weather information: {e}")
+
 
 # -------------------------------
 # --- Mapping Bar Charts + Drill-down + Excel Export ---
